@@ -28,12 +28,12 @@ export function apply(ctx: Context, config: Config) {
   };
 
   const closeListener = async () => {
-    logger.info("disconnected, trying to reconnect...");
+    logger.info("连接中断...");
     try {
       await instance.reconnect(-1, 1000);
-      logger.info("reconnected!");
+      logger.info("重连成功!");
     } catch (error) {
-      logger.error("reconnection failed:", error);
+      logger.error("重连失败:", error);
     }
   };
 
@@ -70,7 +70,7 @@ export function apply(ctx: Context, config: Config) {
         }
         return message;
       } catch (error) {
-        logger.error("Error fetching client list:", error);
+        logger.error("获取客户端列表时出错:", error);
         return "获取客户端列表时出错，请查看日志了解更多信息。";
       }
     });
@@ -100,6 +100,6 @@ export function apply(ctx: Context, config: Config) {
   ctx.on("dispose", () => {
     if (!instance) return;
     instance.removeAllListeners();
-    instance.quit().catch(error => logger.error("Error quitting TeamSpeak connection:", error));
+    instance.quit().catch(error => logger.error("退出TeamSpeak连接时出错:", error));
   });
 }
