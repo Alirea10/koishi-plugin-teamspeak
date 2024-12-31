@@ -1,14 +1,15 @@
 {
-  "name": "koishi-plugin-teamspeak",
+  "name": "koishi-plugin-teamspeak-fox",
   "description": "teamspeak传达室老大爷，帮你盯着谁进来了",
   "version": "1.1.0",
   "contributors": [
+    "alirea <2981883527@qq.com>",
     "Zahariel1942 <nakating@gmail.com>"
   ],
-  "homepage": "https://github.com/Zahariel1942/koishi-plugin-teamspeak",
+  "homepage": "https://github.com/Alirea10/koishi-plugin-teamspeak",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Zahariel1942/koishi-plugin-teamspeak.git"
+    "url": "git+https://github.com/Alirea10/koishi-plugin-teamspeak.git"
   },
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
@@ -18,6 +19,7 @@
   ],
   "license": "MIT",
   "keywords": [
+    "teamspeak",
     "chatbot",
     "koishi",
     "plugin"
