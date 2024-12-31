@@ -1,4 +1,4 @@
-import { Context, Schema, Logger } from "koishi";
+import {Context, Logger} from "koishi";
 import {
   TeamSpeak,
   QueryProtocol,
@@ -7,27 +7,14 @@ import {
   TeamSpeakChannel,
 } from "ts3-nodejs-library";
 
+import {Config} from "./config";
+
+export * from "./config";
+
 export const name = "teamspeak";
 
-export interface Config {
-  groups: string[];
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-}
-
-export const Config: Schema<Config> = Schema.object({
-  groups: Schema.array(Schema.string())
-    .description("监听TS通知的群")
-    .default([]),
-  host: Schema.string().description("服务器IP").default("localhost"),
-  port: Schema.number().description("服务器端口").default(10011),
-  user: Schema.string().description("ServerQuery用户名").default(""),
-  password: Schema.string().description("ServerQuery密码").default(""),
-});
-
 export function apply(ctx: Context, config: Config) {
+
   const logger = new Logger("teamspeak");
   const bot = ctx.bots[0];
   let instance: TeamSpeak | null;
@@ -42,40 +29,50 @@ export function apply(ctx: Context, config: Config) {
 
   const closeListener = async () => {
     logger.info("disconnected, trying to reconnect...");
-    await instance.reconnect(-1, 1000);
-    logger.info("reconnected!");
+    try {
+      await instance.reconnect(-1, 1000);
+      logger.info("reconnected!");
+    } catch (error) {
+      logger.error("reconnection failed:", error);
+    }
   };
 
+  //命令注册
   ctx
     .command("ts", "谁在ts上?")
     .alias("谁在ts")
-    .action(async ({ session }) => {
+    .action(async ({session}) => {
       if (!instance) return;
-      const clients = await instance.clientList({
-        clientType: ClientType.Regular,
-      });
+      try {
+        const clients = await instance.clientList({
+          clientType: ClientType.Regular,
+        });
 
-      if (!clients.length) return "没有人.";
+        if (!clients.length) return "没有人.";
 
-      const channelMap = new Map<TeamSpeakChannel, string[]>();
-      for (const c of clients) {
-        const channel = await instance.getChannelById(c.cid);
+        const channelMap = new Map<TeamSpeakChannel, string[]>();
+        for (const c of clients) {
+          const channel = await instance.getChannelById(c.cid);
 
-        channelMap.set(
-          channel,
-          (channelMap.get(channel) || []).concat([c.nickname])
-        );
+          channelMap.set(
+            channel,
+            (channelMap.get(channel) || []).concat([c.nickname])
+          );
+        }
+
+        const channelArray = Array.from(channelMap.keys());
+        channelArray.sort((a, b) => a.order - b.order);
+
+        let message = "";
+        for (const ch of channelArray) {
+          message += `${ch.name}:\r\n`;
+          message += "    " + (channelMap.get(ch) || []).join(", ") + "\r\n";
+        }
+        return message;
+      } catch (error) {
+        logger.error("Error fetching client list:", error);
+        return "获取客户端列表时出错，请查看日志了解更多信息。";
       }
-
-      const channelArray = Array.from(channelMap.keys());
-      channelArray.sort((a, b) => a.order - b.order);
-
-      let message = "";
-      for (const ch of channelArray) {
-        message += `${ch.name}:\r\n`;
-        message += "    " + channelMap.get(ch).join(", ") + "\r\n";
-      }
-      return message;
     });
 
   ctx.on("ready", async () => {
@@ -84,24 +81,25 @@ export function apply(ctx: Context, config: Config) {
     try {
       instance = await TeamSpeak.connect({
         host: config.host,
-        protocol: QueryProtocol.RAW, //optional
-        queryport: config.port, //optional
-        serverport: 9987,
+        serverport: config.port,
+        protocol: config.protocol === "raw" ? QueryProtocol.RAW : config.protocol === "ssh" ? QueryProtocol.SSH : null,
+        queryport: config.queryport,
         username: config.user,
         password: config.password,
-        nickname: "TSBot",
+        nickname: config.nickname,
       });
 
       instance.on("clientconnect", joinListener);
       instance.on("close", closeListener);
+      logger.info("已连接到teamspeak服务器.");
     } catch (error) {
-      logger.error(error);
+      logger.error("连接到teamspeak服务器出错", error);
     }
   });
 
   ctx.on("dispose", () => {
     if (!instance) return;
     instance.removeAllListeners();
-    instance.quit();
+    instance.quit().catch(error => logger.error("Error quitting TeamSpeak connection:", error));
   });
 }
