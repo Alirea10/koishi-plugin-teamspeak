@@ -1,7 +1,7 @@
 {
-  "name": "koishi-plugin-teamspeak",
-  "description": "123",
-  "version": "0.0.2",
+  "name": "koishi-plugin-ts3manager",
+  "description": "监听ts文字信息，查看谁在ts频道",
+  "version": "0.0.3",
   "main": "lib/index.js",
   "typings": "lib/index.d.ts",
   "files": [
@@ -13,7 +13,9 @@
   "keywords": [
     "chatbot",
     "koishi",
-    "plugin"
+    "plugin",
+    "teamspeak",
+    "ts3"
   ],
   "peerDependencies": {
     "koishi": "^4.18.3"
