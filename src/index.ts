@@ -17,7 +17,6 @@ export const name = "teamspeak";
 export function apply(ctx: Context, config: Config) {
 
   const logger = new Logger("teamspeak");
-  const bot = ctx.bots[0];
   let ts: TeamSpeak | null;
 
 
